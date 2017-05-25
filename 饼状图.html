@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html><head lang="en"><title>饼状图</title>
+    <meta charset="UTF-8">
+    <script>
+        //绘制饼图
+        function drawCircle(canvasId, data_arr, color_arr, text_arr)
+        {
+            //初始化数据
+            var c = document.getElementById(canvasId);
+            var ctx = c.getContext("2d");
+            var radius = c.height / 2 - 20; //半径
+            var ox = radius + 20, oy = radius + 20; //圆心
+            var width = 30, height = 10; //图例宽和高
+            var posX = ox * 2 + 20, posY = 30;   //
+            var textX = posX + width + 5, textY = posY + 10;
+            var startAngle = 0; //起始弧度
+            var endAngle = 0;   //结束弧度
+
+            //将传入的数据转化百分比
+            var totleNb = 0;
+            var new_data_arr = [];
+            for (var i = 0; i < data_arr.length; i++){
+                totleNb += data_arr[i];
+            }
+            for (var i = 0; i < data_arr.length; i++){
+                new_data_arr.push( data_arr[i]/totleNb );
+            }
+
+            //绘制比例图及文字
+            for (var i = 0; i < data_arr.length; i++){
+                //绘制比例图及文字
+                ctx.fillStyle = color_arr[i];
+                ctx.fillRect(posX, posY + 20 * i, width, height);
+                ctx.moveTo(posX, posY + 20 * i);
+                ctx.font = 'bold 12px 微软雅黑';    //斜体 30像素 微软雅黑字体
+                ctx.fillStyle = color_arr[i]; //"#000000";
+                var percent = text_arr[i] + "：" + parseInt(100 * new_data_arr[i]) + "%";
+                ctx.fillText(percent, textX, textY + 20 * i);
+            }
+
+            //利用定时器实现绘制动画
+            var iNow = 0;
+            var moveNomber = 50;
+            var timer = null;
+            pieDraw();
+            function pieDraw(mousePosition){
+                clearInterval(timer);
+                timer = setInterval(function(){
+                    iNow++;
+                    console.log(iNow);
+
+                    if(mousePosition){
+                        clearInterval(timer);
+                        iNow = moveNomber;
+                    }else if(iNow>moveNomber){
+                        clearInterval(timer);
+                        timer = null;
+                        return false;
+                    }
+
+                    //先清除一下图
+                    ctx.clearRect(0, 0, ox * 2 + 20, oy * 2 + 20);
+
+                    for (var j = 0; j < data_arr.length; j++){
+                        //绘制饼图
+                        endAngle = endAngle + new_data_arr[j]* iNow/moveNomber * Math.PI * 2; //结束弧度
+                        ctx.fillStyle = color_arr[j];
+                        ctx.beginPath();
+                        ctx.moveTo(ox, oy); //移动到到圆心
+                        ctx.arc(ox, oy, radius, startAngle, endAngle, false); //
+                        console.log(mousePosition, mousePosition && ctx.isPointInPath(mousePosition.x, mousePosition.y));
+                        if(mousePosition && ctx.isPointInPath(mousePosition.x, mousePosition.y)){
+                            ctx.moveTo(ox, oy);
+                            ctx.arc(ox, oy, radius+5, startAngle, endAngle, false);
+                        }
+
+                        ctx.closePath();
+                        ctx.fill();
+
+                        startAngle = endAngle; //设置起始弧度
+                        if( j == data_arr.length-1 ){
+                            startAngle = 0;
+                            endAngle = 0;
+                        }
+                    }
+
+                },10);
+            }
+
+            //监听鼠标移动
+            var mouseTimer = null;
+            c.addEventListener("mousemove",function(e){
+                var mousePosition = {};
+                e = e || window.event;
+                if( e.layerX || e.layerX==0 ){
+                    mousePosition.x = e.layerX;
+                    mousePosition.y = e.layerY;
+                }else if( e.offsetX || e.offsetX==0 ){
+                    mousePosition.x = e.offsetX;
+                    mousePosition.y = e.offsetY;
+                }
+                //console.log(mousePosition);
+                clearTimeout(mouseTimer);
+                mouseTimer = setTimeout(function(){
+                    pieDraw(mousePosition);
+                },20);
+            });
+
+        }
+        function init() {
+            //绘制饼图
+            //比例数据和颜色
+            var data_arr = [50, 750, 100, 200];
+            var color_arr = ["#00a000", "#00AABB", "#FFAA00", "#FF4400"];
+            var text_arr = ["第一季度", "第二季度", "第三季度", "第四季度"];
+            drawCircle("canvas_circle", data_arr, color_arr, text_arr);
+
+        }
+        //页面加载时执行init()函数
+        window.onload = init;
+    </script>
+</head>
+<body style="padding: 50px" >
+<h3>HTML5绘制饼图演示</h3>
+<p>
+    <canvas id="canvas_circle" width="500" height="300">
+        浏览器不支持canvas
+    </canvas>
+</p>
+</body>
+</html>

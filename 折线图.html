@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        .a{
+            background: #0bfefb;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="barChart" height="400" width="600" style="margin:50px"> 你的浏览器不支持HTML5 canvas </canvas>
+
+    <script type="text/javascript">
+        function goBarChart(dataArr){
+            // 声明所需变量
+            var canvas,ctx;
+            // 图表属性
+            var cWidth, cHeight, cMargin, cSpace;
+            var originX, originY;
+            // 折线图属性
+            var tobalDots, dotSpace, maxValue;
+            var totalYNomber;
+            // 运动相关变量
+            var ctr, numctr, speed;
+
+            // 获得canvas上下文
+            canvas = document.getElementById("barChart");
+            if(canvas && canvas.getContext){
+                ctx = canvas.getContext("2d");
+            }
+            initChart(); // 图表初始化
+            drawLineLabelMarkers(); // 绘制图表轴、标签和标记
+            drawBarAnimate(); // 绘制折线图的动画
+
+            //点击刷新图表
+            canvas.onclick = function(){
+                initChart(); // 图表初始化
+                drawLineLabelMarkers(); // 绘制图表轴、标签和标记
+                drawBarAnimate(); // 绘制折线图的动画
+            };
+
+            // 图表初始化
+            function initChart(){
+                // 图表信息
+                cMargin = 30;
+                cSpace = 60;
+                cHeight = canvas.height - cMargin - cSpace;
+                cWidth = canvas.width - cMargin - cSpace;
+                originX = cMargin + cSpace;
+                originY = cMargin + cHeight;
+
+                // 折线图信息
+                tobalDots = dataArr.length;
+                dotSpace = parseInt( cWidth/tobalDots );
+                maxValue = 0;
+                for(var i=0; i<dataArr.length; i++){
+                    var dotVal = parseInt( dataArr[i][1] );
+                    if( dotVal > maxValue ){
+                        maxValue = dotVal;
+                    }
+                }
+                maxValue += 50;
+                totalYNomber = 10;
+                // 运动相关
+                ctr = 1;
+                numctr = 100;
+                speed = 10;
+
+                ctx.translate(0.5,0.5);  // 当只绘制1像素的线的时候，坐标点需要偏移，这样才能画出1像素实线
+            }
+
+            // 绘制图表轴、标签和标记
+            function drawLineLabelMarkers(){
+                ctx.font = "12px Arial";
+                ctx.lineWidth = 1;
+                ctx.fillStyle = "#000";
+                ctx.strokeStyle = "#000";
+                // y轴
+                drawLine(originX, originY, originX, cMargin);
+                // x轴
+                drawLine(originX, originY, originX+cWidth, originY);
+
+                // 绘制标记
+                drawMarkers();
+            }
+
+            // 画线的方法
+            function drawLine(x, y, X, Y){
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(X, Y);
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            // 绘制标记
+            function drawMarkers(){
+                ctx.strokeStyle = "#E0E0E0";
+                // 绘制 y 轴 及中间横线
+                var oneVal = parseInt(maxValue/totalYNomber);
+                ctx.textAlign = "right";
+                for(var i=0; i<=totalYNomber; i++){
+                    var markerVal =  i*oneVal;
+                    var xMarker = originX-5;
+                    var yMarker = parseInt( cHeight*(1-markerVal/maxValue) ) + cMargin;
+                    //console.log(xMarker, yMarker+3,markerVal/maxValue,originY);
+                    ctx.fillText(markerVal, xMarker, yMarker+3, cSpace); // 文字
+                    if(i>0){
+                        drawLine(originX, yMarker, originX+cWidth, yMarker);
+                    }
+                }
+                // 绘制 x 轴 及中间竖线
+                ctx.textAlign = "center";
+                for(var i=0; i<tobalDots; i++){
+                    var markerVal = dataArr[i][0];
+                    var xMarker = originX+i*dotSpace;
+                    var yMarker = originY+15;
+                    ctx.fillText(markerVal, xMarker, yMarker, cSpace); // 文字
+                    if(i>0){
+                        drawLine(xMarker, originY, xMarker, cMargin);
+                    }
+                }
+                // 绘制标题 y
+                ctx.save();
+                ctx.rotate(-Math.PI/2);
+                ctx.fillText("产 量", -canvas.height/2, cSpace-10);
+                ctx.restore();
+                // 绘制标题 x
+                ctx.fillText("年份", originX+cWidth/2, originY+cSpace/2+10);
+            };
+
+            //绘制折线图
+            function drawBarAnimate(){
+                ctx.strokeStyle = "green";  //"#49FE79";
+
+                //连线
+                ctx.beginPath();
+                for(var i=0; i<tobalDots; i++){
+                    var dotVal = dataArr[i][1];
+                    var barH = parseInt( cHeight*dotVal/maxValue* ctr/numctr );//
+                    var y = originY - barH;
+                    var x = originX + dotSpace*i;
+                    if(i==0){
+                        ctx.moveTo( x, y );
+                    }else{
+                        ctx.lineTo( x, y );
+                    }
+                }
+                ctx.stroke();
+
+                //背景
+                ctx.lineTo( originX+dotSpace*(tobalDots-1), originY);
+                ctx.lineTo( originX, originY);
+                //背景渐变色
+                //柱状图渐变色
+                var gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(0,255,0,0.3)');
+                gradient.addColorStop(1, 'rgba(0,255,0,0.1)');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.closePath();
+                ctx.fillStyle = "green";
+
+                //绘制点
+                for(var i=0; i<tobalDots; i++){
+                    var dotVal = dataArr[i][1];
+                    var barH = parseInt( cHeight*dotVal/maxValue * ctr/numctr );
+                    var y = originY - barH;
+                    var x = originX + dotSpace*i;
+                    drawArc( x, y );  //绘制点
+                    ctx.fillText(parseInt(dotVal*ctr/numctr), x+15, y-8); // 文字
+                }
+
+                if(ctr<numctr){
+                    ctr++;
+                    setTimeout(function(){
+                        ctx.clearRect(0,0,canvas.width, canvas.height);
+                        drawLineLabelMarkers();
+                        drawBarAnimate();
+                    }, speed);
+                }
+            }
+
+            //绘制圆点
+            function drawArc( x, y, X, Y ){
+                ctx.beginPath();
+                ctx.arc( x, y, 3, 0, Math.PI*2 );
+                ctx.fill();
+                ctx.closePath();
+            }
+
+
+        }
+
+
+        goBarChart(
+                [[2007, 750], [2008, 425], [2009, 960], [2010, 700], [2011, 800], [2012, 975], [2013, 375], [2014, 775]]
+        )
+
+
+    </script>
+</body>
+</html>

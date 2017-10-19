@@ -35,7 +35,7 @@
             
             initChart(); // 图表初始化
             drawLineLabelMarkers(); // 绘制图表轴、标签和标记
-            drawBarAnimate(); // 绘制柱状图的动画
+            drawChartAnimate(); // 绘制柱状图的动画
             //检测鼠标移动
             var mouseTimer = null;
             canvas.addEventListener("mousemove",function(e){
@@ -52,7 +52,7 @@
                 mouseTimer = setTimeout(function(){
                     ctx.clearRect(0,0,canvas.width, canvas.height);
                     drawLineLabelMarkers();
-                    drawBarAnimate(true);
+                    drawChartAnimate(true);
                 },10);
             });
 
@@ -60,7 +60,7 @@
             canvas.onclick = function(){
                 initChart(); // 图表初始化
                 drawLineLabelMarkers(); // 绘制图表轴、标签和标记
-                drawBarAnimate(); // 绘制折线图的动画
+                drawChartAnimate(); // 绘制折线图的动画
             };
 
 
@@ -180,8 +180,8 @@
                 ctx.fillText(textArr[0], originX+cWidth/2, originY+cSpace/2+30);
             };
 
-            //绘制柱形图
-            function drawBarAnimate(mouseMove){
+            //绘制动画图
+            function drawChartAnimate(mouseMove){
             	
                 var ifTip = false;
                 var tipArr = null;
@@ -193,7 +193,7 @@
                     var oY = originY - cHeight*(dataArr[i][1]-minYValue)/(maxYValue-minYValue);
                     ctx.beginPath();
                     
-                    ctx.arc(oX,oY,8*ctr/numctr,0, Math.PI*2,true);
+                    ctx.arc(oX,oY,10*ctr/numctr,0, Math.PI*2,true);
                     
                     if(!ifTip && mouseMove && ctx.isPointInPath(mousePosition.x*2, mousePosition.y*2)){ //如果是鼠标移动的到柱状图上，重新绘制图表
 	                    ctx.fillStyle = "rgba(46,199,201,1)";
@@ -217,13 +217,13 @@
                     setTimeout(function(){
                         ctx.clearRect(0,0,canvas.width, canvas.height);
                         drawLineLabelMarkers();
-                        drawBarAnimate();
+                        drawChartAnimate();
                     }, speed*=1.08);
                 }
             }
             
+            //绘制平均值线
             function drawAverageLine(){
-            	//绘制平均值线
                 ctx.beginPath();
                 var yNb = originY-cHeight*(yAverage-minYValue)/(maxYValue-minYValue);
                 var xNb = originX+cWidth*ctr/numctr+cMargin/2;

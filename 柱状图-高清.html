@@ -108,7 +108,7 @@
 
             // 绘制图表轴、标签和标记
             function drawLineLabelMarkers(){
-                ctx.translate(0.5,0.5);  // 当只绘制1像素的线的时候，坐标点需要偏移，这样才能画出1像素实线
+                //ctx.translate(0.5,0.5);  // 当只绘制1像素的线的时候，坐标点需要偏移，这样才能画出1像素实线
                 ctx.font = "24px Arial";
                 ctx.lineWidth = 2;
                 ctx.fillStyle = "#000";
@@ -120,7 +120,7 @@
 
                 // 绘制标记
                 drawMarkers();
-                ctx.translate(-0.5,-0.5);  // 还原位置
+                //ctx.translate(-0.5,-0.5);  // 还原位置
             }
 
             // 画线的方法

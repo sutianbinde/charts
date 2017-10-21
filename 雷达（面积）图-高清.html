@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+    	canvas{border: 1px solid #A4E2F9;}
+    </style>
+</head>
+<body>
+    <div id="chart" height="400" width="600" style="margin:30px;"></div>
+    
+    <script type="text/javascript">
+        function goChart(cBox,dataArr,textArr,ifFill){
+            // 声明所需变量
+            var canvas,ctx;
+            // 图表属性
+            var cWidth, cHeight, cMargin, cSpace;
+            var originX, originY;
+            // 主图属性
+            var tobalDots, maxValue;
+            var lineStartAngle,radius;
+            var colorArr;
+
+            // 运动相关变量
+            var ctr, numctr, speed;
+            //鼠标移动
+            var mousePosition = {};
+            
+        	// 创建canvas并获得canvas上下文
+	       	canvas = document.createElement("canvas");
+	       	if(canvas && canvas.getContext){
+                ctx = canvas.getContext("2d");
+            }
+	       	
+	       	canvas.innerHTML = "你的浏览器不支持HTML5 canvas";
+	       	cBox.appendChild(canvas);
+            
+            initChart(); // 图表初始化
+
+            // 图表初始化
+            function initChart(){
+                // 图表信息
+                cMargin = 60;
+		        cSpace = 60;
+		        //将canvas扩大2倍，然后缩小，以适应高清屏幕
+		        canvas.width = cBox.getAttribute("width")* 2 ;
+		        canvas.height = cBox.getAttribute("height")* 2;
+		        canvas.style.height = canvas.height/2 + "px";
+		        canvas.style.width = canvas.width/2 + "px";
+		        //cHeight = canvas.height - cMargin*2-cSpace*2;
+		        //cWidth = canvas.width - cMargin*2-cSpace*2;
+		        originX = canvas.width/2;
+		        originY = canvas.height/2;
+
+                // 柱状图信息
+                tobalDots = textArr.length;
+                var allArr = [];
+                for(var i=0; i<dataArr.length; i++){
+                    allArr = allArr.concat( dataArr[i].value );
+                }
+                maxValue = Math.max.apply(null,allArr);
+                
+				colorArr=["#AD93DB","#3AC9CB","#5FB2ED"]; //颜色数据
+                // 运动相关
+                ctr = 1;
+                numctr = 40;
+                speed = 1;
+                
+				textPadding=20;  //文字与文字基线线之间的间距
+				lineStartAngle =Math.PI+ Math.PI/tobalDots; //起始绘制角度
+				radius = originY-cMargin-cSpace; //半径
+				
+            }
+
+            drawLineLabelMarkers(); // 绘制图表轴、标签和标记
+            // 绘制图表轴、标签和标记
+            function drawLineLabelMarkers(){
+                ctx.font = "24px Arial";
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#DBDBDB";
+                ctx.fillStyle = "#000";
+                var startAngle = lineStartAngle;
+                // 五个底图环
+                for(var i=0; i<6; i++){
+	               	R = radius*(1-i/5); //五个
+                	//画一个环
+	               	ctx.beginPath();
+	               	for(var j=0; j<tobalDots+1; j++){ //多画一个闭合路径
+	               		startAngle = startAngle+2*Math.PI/tobalDots;
+	               		var x = parseInt( originX+R*Math.cos(startAngle) );
+	               		var y = originY+R*Math.sin(startAngle);
+	               		
+               			ctx.lineTo(x, y);//点连线
+               			ctx.lineTo(originX, originY);//点到圆心连线
+               			ctx.moveTo(x, y);
+               			
+               			//绘制文字
+               			if(i==0 && textArr[j]){
+               				drawMarkers(textArr[j],x,y)
+               			}
+	               	}
+	               	
+	               	if(i%2==0){
+               			ctx.fillStyle = "#ECECEC";
+	               	}else{
+	               		ctx.fillStyle = "#fff";
+	               	}
+	                ctx.closePath();
+	               	ctx.fill();
+	               	ctx.stroke();
+                }
+                
+            }
+
+            // 绘制标记
+            function drawMarkers(text,x,y){
+   				if(x<originX && y<=originY){
+     				ctx.textAlign="right";
+     				ctx.fillText(text, x-textPadding, y-textPadding);
+     			}else if(x<originX && y>originY){
+     				ctx.textAlign="right";
+     				ctx.fillText(text, x-textPadding, y+textPadding);
+     			}else if(y<=originY){
+     				ctx.textAlign="left";
+     				ctx.fillText(text, x+textPadding, y-textPadding);
+     			}else{
+     				ctx.textAlign="left";
+     				ctx.fillText(text, x+textPadding, y+textPadding);
+     			}
+            };
+            
+            
+            drawChartAnimate(); // 绘制动画
+            //绘制动画
+            function drawChartAnimate(mouseMove){
+                var ifTip = false;
+                var tipArr = null;
+            	//循环传入的多组数据
+               	for(var i=0; i<dataArr.length; i++){
+                	var startAngle = lineStartAngle;
+               		var nowArr = dataArr[i].value;
+               		var arcArr = [];
+                	ctx.lineWidth = 4;
+               		
+		            ctx.fillStyle = ctx.strokeStyle = colorArr[i%colorArr.length];
+               		ctx.beginPath();
+               		for(var j=0; j<tobalDots; j++){
+               			var R = radius*(nowArr[j]/maxValue)*ctr/numctr;
+	               		startAngle = startAngle+2*Math.PI/tobalDots;
+	               		var x = originX+R*Math.cos(startAngle);
+	               		var y = originY+R*Math.sin(startAngle);
+	               		//console.log(x,y);
+	               		
+	           			ctx.lineTo(x, y);//点连线
+	           			function drawArc(x,y,color,theTipArr){
+	           				return function(){
+		           				ctx.beginPath();
+		           				ctx.fillStyle = "#fff";
+		           				ctx.strokeStyle = color;
+		           				ctx.lineWidth = 4*ctr/numctr;
+		           				ctx.arc(x,y,6*ctr/numctr,0,Math.PI*2);
+		           				
+		           				if(!ifTip && mouseMove && ctx.isPointInPath(mousePosition.x*2, mousePosition.y*2)){ //如果是鼠标移动的到小点上，重新绘制图表
+				                    //ctx.fillStyle = "rgba(46,199,201,1)";
+				                    //是否绘制提示
+				                    ifTip = true;
+				                    tipArr = theTipArr;
+				                    ctx.lineWidth *= 2;
+				                    //canvas.style.cursor = "pointer";
+				              	}
+		           				
+		           				ctx.fill();
+		           				ctx.stroke();
+		           			};
+	           			}
+	           			arcArr.push( drawArc( x, y, colorArr[i%colorArr.length], [dataArr[i].name,nowArr[j],textArr[j]] ) ); //将绘制圆点方法利用闭包存起来，后面统一调用，数据多时颜色循环使用
+	               	}
+	               	
+	                ctx.closePath();
+       				if(ifFill){
+       					ctx.globalAlpha = 0.3;
+       					ctx.fill();
+       					ctx.globalAlpha = 1;
+       				}
+	               	ctx.stroke();
+	               	
+	               	for(var m=0; m<arcArr.length; m++){
+               			arcArr[m]();
+	               	}
+	               	
+	               	ifTip && drawTips(mousePosition.x*2, mousePosition.y*2,tipArr);
+	               	
+               	}
+               	
+            	
+            	if(ctr<numctr){
+                    ctr++;
+                    setTimeout(function(){
+                        ctx.clearRect(0,0,canvas.width, canvas.height);
+                        drawLineLabelMarkers();
+                        drawChartAnimate();
+                    }, speed*=1.08);
+                }
+            }
+            
+            
+            //绘制提示框
+            function drawTips(oX,oY,valArr){
+        		ctx.save();
+            	ctx.beginPath();
+            	ctx.fillStyle = "rgba(0,0,0,0.5)";
+            	var H = 120;
+            	roundedRect(ctx,oX+10,oY-H/2,2*H,H,5);
+            	
+            	ctx.fillStyle = "#fff";
+            	ctx.textAlign="left";
+            	ctx.fillText(valArr[0]+"：", oX+20,oY-H/10);
+            	ctx.fillText(valArr[2]+"："+valArr[1], oX+20,oY+H/4);
+            	ctx.restore();
+            }
+            
+            //绘制圆角矩形的方法
+	        function roundedRect(ctx,x,y,width,height,radius){
+	            ctx.moveTo(x,x+radius);
+	            ctx.beginPath();
+	            ctx.lineTo(x,y+height-radius);
+	            ctx.quadraticCurveTo(x,y+height,x+radius,y+height);
+	            ctx.lineTo(x+width-radius, y+height);
+	            ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);
+	            ctx.lineTo(x+width,y+radius);
+	            ctx.quadraticCurveTo(x+width,y,x+width-radius,y);
+	            ctx.lineTo(x+radius,y);
+	            ctx.quadraticCurveTo(x,y,x,y+radius);
+	            ctx.closePath();
+	            ctx.fill();
+	        }
+            
+            
+            
+            //监听鼠标移动
+            var mouseTimer = null;
+            canvas.addEventListener("mousemove",function(e){
+                e = e || window.event;
+                if( e.offsetX || e.offsetX==0 ){
+                    mousePosition.x = e.offsetX;
+                    mousePosition.y = e.offsetY;
+                }else if( e.layerX || e.layerX==0 ){
+                    mousePosition.x = e.layerX;
+                    mousePosition.y = e.layerY;
+                }
+                
+                clearTimeout(mouseTimer);
+                mouseTimer = setTimeout(function(){
+                	ctx.clearRect(0,0,canvas.width, canvas.height);
+                    drawLineLabelMarkers();
+                    drawChartAnimate(true);
+                    
+                },10);
+            });
+            
+            
+
+        }
+
+		var dataArr = [
+                {
+                    value : [20000, 10000, 28000, 35000, 50000, 19000],
+                    name : '预算分配'
+                },
+                 {
+                    value : [15000, 14000, 28000, 31000, 42000, 21000],
+                    name : '实际开销'
+                }
+            ];
+            
+		/*
+		 * 参数1 ：需要显示canvas的dom  (非canvas标签，需要指定height和width)
+		 * 参数2：二维数据  每个数据表示需要显示的一组数据对象 （value表示数据数组，name表示此数据名称）
+		 * 参数3：一维数组  对应上面每个数据的名字
+		 * 参数4：中部填充是否实心 ，默认false
+		 * */
+        goChart(document.getElementById("chart"),dataArr,["销售","管理","信息技术","客服","研发","市场"],true)
+
+
+    </script>
+</body>
+</html>

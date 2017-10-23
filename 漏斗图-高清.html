@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+    	canvas{border: 1px solid #A4E2F9;}
+    </style>
+</head>
+<body>
+    <div id="chart" height="400" width="600" style="margin:30px;"></div>
+    
+    <script type="text/javascript">
+        function goChart(cBox,dataArr,textArr,ifFill){
+            // 声明所需变量(canvas 2d上下文)
+            var canvas,ctx;
+            // 图表属性
+            var cWidth, //图表中部内容宽度
+            	cHeight, //图表中部内容高度
+            	cMargin, //图表中部内容到canvas边的间距（留白）
+            	cSpace,  //中部内容外的说明文字空间
+            	textPadding; //文字到图表内容的间距
+            var originX, originY; //图表的原点（坐标轴原点/圆心/某个参考中心点）
+            // 主图属性
+            var totalNomber, maxValue; // 模块数   数据最大值
+            var colorArr; //显示的颜色数组
+
+            // 运动相关变量
+            var ctr, numctr, speed; //起始步骤   全部步数  运动速度(每次运动间隔的毫秒数)
+            //鼠标移动
+            var mousePosition = {};  //鼠标位置信息
+            
+        	// 创建canvas并获得canvas上下文
+	       	canvas = document.createElement("canvas");
+	       	if(canvas && canvas.getContext){
+                ctx = canvas.getContext("2d");
+            }
+	       	
+	       	canvas.innerHTML = "你的浏览器不支持HTML5 canvas";
+	       	cBox.appendChild(canvas);
+            
+            initChart(); // 图表初始化
+
+            // 图表初始化
+            function initChart(){
+                // 图表信息
+                cMargin = 60;
+		        cSpace = 60;
+		        //将canvas扩大2倍，然后缩小，以适应高清屏幕
+		        canvas.width = cBox.getAttribute("width")* 2 ;
+		        canvas.height = cBox.getAttribute("height")* 2;
+		        canvas.style.height = canvas.height/2 + "px";
+		        canvas.style.width = canvas.width/2 + "px";
+		        cHeight = canvas.height - cMargin*2-cSpace*2;
+		        cWidth = canvas.width - cMargin*2-cSpace*2;
+		        originX = canvas.width/2;
+		        originY = cHeight+cSpace+cMargin;  //以漏斗图的最下面那个点为中心点
+
+                // 主图信息
+                totalNomber = textArr.length;
+                var allArr = dataArr[0].value;
+//              for(var i=0; i<dataArr.length; i++){
+//                  allArr = allArr.concat( dataArr[i].value );
+//              }
+                maxValue = Math.max.apply(null,allArr);
+                
+				colorArr=["#2DC6C8","#B6A2DD","#5AB1EE","#FEB880","#D7797F"]; //颜色数据
+                // 运动相关
+                ctr = 1;
+                numctr = 40;
+                speed = 2;
+                
+				textPadding=20;  //文字与文字基线线之间的间距
+				
+            }
+            
+			drawLegend();
+		    //绘制比例图及文字
+		    function drawLegend(){
+		    	ctx.textAlign="left";
+		    	
+		    	var posX = cMargin+cSpace*3,
+		    	posY = cMargin,
+		    	tWidth = 30, //图例宽和高
+		    	tHeight = 20
+		    	
+	            for (var i = 0; i < totalNomber; i++){
+	                //绘制比例图及文字
+	                ctx.fillStyle = colorArr[i];
+	                ctx.fillRect(posX, posY, tWidth, tHeight);
+	                ctx.moveTo(posX, posY);
+	                ctx.font = 'normal 24px 微软雅黑';    //斜体 30像素 微软雅黑字体
+	                ctx.fillStyle = colorArr[i];
+	                //var percent = dataArr[i][2] + "：" + parseInt(100 * new_data_arr[i]) + "%";
+	                ctx.fillText(textArr[i], posX+tWidth+10, posY+17);
+	                
+	                posX += 150;
+	                
+	            }
+		    };
+
+
+
+            var oldArr = dataArr[0].value;
+            var nowArr = [];
+            var nowTextArr = [];
+            for(var i=0; i<totalNomber; i++){
+            	var obj = {
+            		value:oldArr[i],
+            		name:textArr[i]
+            	}
+            	nowArr.push(obj);
+            }
+            nowArr.sort(function(a,b){
+            	return a.value - b.value;
+            });
+            
+            var positionArr = [];
+
+        	//循环生成每个块的位置信息
+        	var R = cWidth/2;
+        	var blockMargin = 4;
+        	var lineMargin = 20;
+        	for(var i=0; i<totalNomber; i++){
+        		var obj = {
+        			x:originX,
+        			y1:originY-cHeight/totalNomber*i,
+        			y2:originY-cHeight/totalNomber*(i+1)+blockMargin,
+        			r1:R*(nowArr[i-1] ? nowArr[i-1].value : 0)/maxValue,
+        			r2:R*nowArr[i].value/maxValue-blockMargin
+        		}
+        		console.log((nowArr[i-1] ? nowArr[i-1].value : 0)/maxValue,nowArr[i].value/maxValue)
+        		
+        		positionArr.push(obj);
+        	}
+        	//console.log(positionArr);
+        	
+            drawChartAnimate(); // 绘制动画
+            //绘制动画
+            function drawChartAnimate(mouseMove){
+                var persent = ctr/numctr;
+	            var tipArr = null;
+	            
+            	//绘制大方框
+            	
+            	//绘制每个块
+               	for(var i=0; i<totalNomber; i++){
+               		
+                	ctx.lineWidth = 2;
+		            ctx.fillStyle = colorArr[i%colorArr.length];
+		            var positionObj= positionArr[i];
+		            
+            		//绘制方块
+	           		ctx.beginPath();
+	           		var y1 = positionObj.y1-(positionObj.y1-positionObj.y2)/2*(1-persent);
+	           		var y2 = positionObj.y2+(positionObj.y1-positionObj.y2)/2*(1-persent);
+	           		var r1 = positionObj.r1*persent;
+	        		var r2 = positionObj.r2*persent;
+	           		ctx.moveTo(positionObj.x-r1,y1); //左下点
+	           		ctx.lineTo(positionObj.x+r1,y1);  //右下
+	           		ctx.lineTo(positionObj.x+r2,y2);  //右上
+	           		ctx.lineTo(positionObj.x-r2,y2);  //左上
+	           		if(mouseMove && ctx.isPointInPath(mousePosition.x*2, mousePosition.y*2)){
+	                        ctx.globalAlpha = 0.8;
+	                        tipArr = ["数据",nowArr[i].value,nowArr[i].name];
+	                }
+	           		
+	                ctx.closePath();
+	                ctx.fill();
+	           		ctx.globalAlpha = 1;
+	                tipArr && drawTips(mousePosition.x*2, mousePosition.y*2,tipArr);
+	                
+	                
+	                //绘制外部的线
+	                y1 = originY - cHeight/totalNomber*i*persent;
+	           		y2 = originY - cHeight/totalNomber*(i+1)*persent+blockMargin;
+	           		r1 *= persent;
+	           		r2 *= persent;
+	                ctx.beginPath();
+	                var LDx = positionObj.x-r1-lineMargin;
+	                var Dy = y1;
+	                var RDx = positionObj.x+r1+lineMargin;
+	                
+	                console.log(Dy);
+	                if(i === 0){
+	                	Dy += lineMargin;
+	                	LDx = RDx = originX;
+	                }
+		            ctx.moveTo(LDx,Dy); //左下点
+	           		if(i === totalNomber-1){
+	           			ctx.lineTo(positionObj.x-r2-lineMargin-blockMargin-lineMargin/2,y2-blockMargin-lineMargin/2);  //左上
+	           			ctx.lineTo(positionObj.x+r2+lineMargin+blockMargin+lineMargin/2,y2-blockMargin-lineMargin/2);  //右上
+	           			ctx.lineTo(RDx,Dy);  //右下
+	           		}else{
+	           			ctx.lineTo(positionObj.x-r2-lineMargin-blockMargin,y2-blockMargin);  //左上
+	           			ctx.moveTo(RDx,Dy);  //右下
+	           			ctx.lineTo(positionObj.x+r2+lineMargin+blockMargin,y2-blockMargin);  //右上
+	           		}
+	           		console.log(persent);
+            		ctx.strokeStyle = "rgba(0,0,0,"+0.3*persent+")";
+	           		ctx.stroke();
+		            /*drawFill({
+	        			x:positionObj.x,
+	        			y1:positionObj.y1-(positionObj.y1-positionObj.y2)/2*(1-persent),
+	        			y2:positionObj.y2+(positionObj.y1-positionObj.y2)/2*(1-persent),
+	        			r1:positionObj.r1*persent,
+	        			r2:positionObj.r2*persent
+	        		},false,mouseMove,["数据",nowArr[i].value,nowArr[i].name]);*/
+	               	
+                }
+            	
+            	if(ctr<numctr){
+                    ctr++;
+                    setTimeout(function(){
+                        ctx.clearRect(0,0,canvas.width, canvas.height);
+                        drawLegend();
+                        drawChartAnimate();
+                    }, speed*=1.08);
+                }
+            }
+            
+            
+            //绘制提示框
+            function drawTips(oX,oY,valArr){
+            	
+				canvas.style.cursor = "pointer";
+        		ctx.save();
+            	ctx.beginPath();
+            	ctx.fillStyle = "rgba(0,0,0,0.5)";
+            	var H = 100;
+            	roundedRect(ctx,oX+10,oY,2*H,H,5);
+            	
+            	ctx.fillStyle = "#fff";
+            	ctx.textAlign="left";
+            	ctx.fillText(valArr[0]+"：", oX+H/3,oY+H/3);
+            	ctx.fillText(valArr[2]+"："+valArr[1], oX+H/3,oY+H/1.5);
+            	ctx.restore();
+            }
+            
+            //绘制圆角矩形的方法
+	        function roundedRect(ctx,x,y,width,height,radius){
+	            ctx.moveTo(x,x+radius);
+	            ctx.beginPath();
+	            ctx.lineTo(x,y+height-radius);
+	            ctx.quadraticCurveTo(x,y+height,x+radius,y+height);
+	            ctx.lineTo(x+width-radius, y+height);
+	            ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);
+	            ctx.lineTo(x+width,y+radius);
+	            ctx.quadraticCurveTo(x+width,y,x+width-radius,y);
+	            ctx.lineTo(x+radius,y);
+	            ctx.quadraticCurveTo(x,y,x,y+radius);
+	            ctx.closePath();
+	            ctx.fill();
+	        }
+            
+            
+            
+            //监听鼠标移动
+            var mouseTimer = null;
+            canvas.addEventListener("mousemove",function(e){
+                e = e || window.event;
+                if( e.offsetX || e.offsetX==0 ){
+                    mousePosition.x = e.offsetX;
+                    mousePosition.y = e.offsetY;
+                }else if( e.layerX || e.layerX==0 ){
+                    mousePosition.x = e.layerX;
+                    mousePosition.y = e.layerY;
+                }
+                
+                clearTimeout(mouseTimer);
+                mouseTimer = setTimeout(function(){
+                	ctx.clearRect(0,0,canvas.width, canvas.height);
+                    drawLegend();
+                    drawChartAnimate(true);
+                    
+                },10);
+            });
+            
+            
+
+        }
+
+		var dataArr = [
+                {
+                    value : [100, 40, 60, 80, 20],
+                    name : '预期'
+                },
+                 {
+                    value : [15000, 8000, 18000, 31000, 42000, 11000],
+                    name : '实际'
+                }
+            ];
+            
+		/*
+		 * 参数1 ：需要显示canvas的dom  (非canvas标签，需要指定height和width)
+		 * 参数2：二维数据  每个数据表示需要显示的一组数据对象 （value表示数据数组，name表示此数据名称）
+		 * 参数3：一维数组  对应上面每个数据的名字
+		 * 参数4：中部填充是否实心 ，默认false
+		 * */
+        goChart(document.getElementById("chart"),dataArr,["订单量","访问量","点击量","咨询量","转发量"],true)
+
+
+    </script>
+</body>
+</html>

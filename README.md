@@ -13,4 +13,6 @@
 </br><img src="images/散点图.png" width="400"></br>
 + [雷达图](https://sutianbinde.github.io/charts/%E9%9B%B7%E8%BE%BE%EF%BC%88%E9%9D%A2%E7%A7%AF%EF%BC%89%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
 </br><img src="images/雷达图.png" width="400"></br>
++ [漏斗图](https://sutianbinde.github.io/charts/%E6%BC%8F%E6%96%97%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
+</br><img src="images/漏斗图.png" width="400"></br>
 

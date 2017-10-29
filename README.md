@@ -16,3 +16,5 @@
 + [漏斗图](https://sutianbinde.github.io/charts/%E6%BC%8F%E6%96%97%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
 </br><img src="images/漏斗图.png" width="400"></br>
 
++ [k线图](https://sutianbinde.github.io/charts/k%E7%BA%BF%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
+</br><img src="images/kline.png" width="700"></br>

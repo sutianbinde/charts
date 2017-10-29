@@ -3,7 +3,7 @@
 
 ## 已更新：
 
-+ [饼状图](https://sutianbinde.github.io/charts/%E9%A5%BC%E7%8A%B6%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
++ [饼状图（点击文字跳转到演示页面）](https://sutianbinde.github.io/charts/%E9%A5%BC%E7%8A%B6%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
 </br><img src="images/饼状图.png" width="400"></br>
 + [线状图/折线图](https://sutianbinde.github.io/charts/%E6%8A%98%E7%BA%BF%E5%9B%BE-%E9%AB%98%E6%B8%85.html)
 </br><img src="images/折线图.png" width="400"></br>
